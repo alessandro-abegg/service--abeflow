@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: abeflow_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: abeflow
+      MYSQL_USER: abeflow_user
+      MYSQL_PASSWORD: abeflow_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - abeflow_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: abeflow_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - abeflow_network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: abeflow_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: abeflow_user
+      RABBITMQ_DEFAULT_PASS: abeflow_pass
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - abeflow_network
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  abeflow_network:
+    driver: bridge

@@ -1,0 +1,35 @@
+# .cursorrules
+
+## Project Overview
+Abeflow is an open-source service for generating dynamic pipelines in a programmatic or visual manner. The project is released under an open-source license that allows use without financial earnings. The main idea is to permit the generation of dynamic pipelines programmatically or visually.
+
+## Tech Stack
+- **Language**: Kotlin
+- **Framework**: Spring Boot
+- **Build Tool**: Maven
+- **Package Structure**: br.com.abegg.abeflow.service
+
+## Key Directories
+- `src/main/kotlin/br/com/abegg/abeflow/service/`: Main application code
+- `src/main/resources/`: Configuration files (application.yaml, static, templates)
+- `src/test/kotlin/br/com/abegg/abeflow/service/`: Test code
+
+## Coding Standards
+- Follow Kotlin coding conventions.
+- Use Spring Boot best practices for REST APIs, configuration, etc.
+- Write unit tests for all new features.
+- Use meaningful variable and function names.
+- Add comments for complex logic.
+
+## Development Workflow
+- Use Maven for building: `./mvnw clean compile`
+- Run tests: `./mvnw test`
+- Run application: `./mvnw spring-boot:run`
+- Ensure all code is committed with descriptive messages.
+
+## AI Assistant Guidelines
+- When suggesting code, ensure it aligns with the project's open-source nature and dynamic pipeline focus.
+- Prefer functional programming styles where appropriate in Kotlin.
+- Suggest using Spring Boot annotations and configurations correctly.
+- For pipeline-related features, think in terms of modularity and extensibility.
+- Avoid suggesting proprietary or paid solutions; keep everything open-source friendly.
