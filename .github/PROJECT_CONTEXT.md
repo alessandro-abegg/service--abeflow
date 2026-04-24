@@ -19,35 +19,42 @@ service--abeflow/
 ├── src/
 │   ├── main/
 │   │   ├── kotlin/br/com/abegg/abeflow/service/
-│   │   │   ├── AbeflowApplication.kt     # Spring Boot main application class
-│   │   │   ├── config/                   # Configuration classes (TO BE CREATED)
-│   │   │   │   └── ApplicationConfig.kt
-│   │   │   ├── controller/               # REST API controllers (TO BE CREATED)
-│   │   │   │   └── PipelineController.kt
-│   │   │   ├── service/                  # Business logic services (TO BE CREATED)
-│   │   │   │   ├── PipelineService.kt
-│   │   │   │   └── ValidationService.kt
-│   │   │   ├── model/                    # Data models and DTOs (TO BE CREATED)
-│   │   │   │   ├── Pipeline.kt
-│   │   │   │   ├── PipelineNode.kt
-│   │   │   │   └── PipelineDTO.kt
-│   │   │   ├── repository/               # Data access layer (TO BE CREATED)
-│   │   │   │   └── PipelineRepository.kt
-│   │   │   ├── exception/                # Custom exceptions (TO BE CREATED)
-│   │   │   │   ├── PipelineException.kt
-│   │   │   │   └── ValidationException.kt
-│   │   │   └── util/                     # Utility classes (TO BE CREATED)
-│   │   │       └── PipelineValidator.kt
+│   │   │   ├── Application.kt            # Spring Boot main application class
+│   │   │   ├── config/                   # Configuration classes
+│   │   │   │   ├── RabbitMQConfig.kt     # RabbitMQ configuration
+│   │   │   │   └── RedisConfig.kt        # Redis configuration
+│   │   │   ├── datasources/              # Data access layer
+│   │   │   │   └── dynamicobject/        # Dynamic object data access
+│   │   │   │       ├── DynamicObjectRepositoryImpl.kt  # Repository implementation
+│   │   │   │       ├── DynamicObjectRepositoryMongo.kt  # MongoDB repository
+│   │   │   │       ├── mappers/          # Mapping utilities
+│   │   │   │       │   └── DynamicObjectMapper.kt
+│   │   │   │       └── model/            # MongoDB models
+│   │   │   ├── entities/                 # Domain entities
+│   │   │   │   ├── DynamicObject.kt      # Main entity
+│   │   │   │   ├── DynamicObjectStatus.kt # Status enum
+│   │   │   │   ├── DynamicObjectType.kt  # Type enum
+│   │   │   │   └── pojos/                # POJOs
+│   │   │   │       ├── IPojo.kt          # Base interface
+│   │   │   │       ├── PipelinePojo.kt   # Pipeline POJO
+│   │   │   │       └── ScriptPojo.kt     # Script POJO
+│   │   │   ├── iteractors/               # Business logic layer
+│   │   │   │   ├── DynamicObjectService.kt # Service class
+│   │   │   │   └── components/           # Components
+│   │   │   │       └── DynamicObjectValidatorComponent.kt
+│   │   │   ├── repositories/             # Repository interfaces
+│   │   │   │   └── DynamicObjectRepository.kt
+│   │   │   └── transportlayers/          # Transport layer
+│   │   │       ├── DynamicObjectApi.kt   # API interface
+│   │   │       └── impl/                 # API implementations
+│   │   │           └── DynamicObjectApiImpl.kt
 │   │   └── resources/
 │   │       ├── application.yaml          # Application properties
-│   │       ├── static/                   # Static files (CSS, JS, images)
+│   │       ├── static/                   # Static files
 │   │       └── templates/                # HTML templates
 │   └── test/
 │       └── kotlin/br/com/abegg/abeflow/service/
-│           ├── AbeflowApplicationTests.kt
-│           ├── controller/               # Controller tests
-│           ├── service/                  # Service tests
-│           └── integration/              # Integration tests
+│           └── ApplicationTests.kt       # Integration tests
 ├── mvnw                                  # Maven wrapper script
 ├── mvnw.cmd                              # Maven wrapper script (Windows)
 ├── pom.xml                               # Maven configuration
@@ -64,65 +71,50 @@ service--abeflow/
 
 | Package | Purpose | Status | Key Files |
 |---------|---------|--------|-----------|
-| `controller` | REST API endpoints | ❌ TO CREATE | Pipeline operations, health checks |
-| `service` | Business logic | ❌ TO CREATE | Pipeline generation, validation |
-| `model` | Data structures | ❌ TO CREATE | Pipeline, Node, DTO classes |
-| `repository` | Data persistence | ❌ TO CREATE | Database/storage access |
-| `config` | Spring configuration | ❌ TO CREATE | Beans, application setup |
-| `exception` | Custom exceptions | ❌ TO CREATE | Error handling |
-| `util` | Helper utilities | ❌ TO CREATE | Validators, converters |
+| `config` | Spring configuration | ✅ IMPLEMENTED | RabbitMQConfig.kt, RedisConfig.kt |
+| `datasources` | Data access layer | ✅ IMPLEMENTED | DynamicObjectRepositoryImpl.kt, DynamicObjectRepositoryMongo.kt |
+| `entities` | Domain entities | ✅ IMPLEMENTED | DynamicObject.kt, DynamicObjectStatus.kt, DynamicObjectType.kt |
+| `iteractors` | Business logic | ✅ IMPLEMENTED | DynamicObjectService.kt, DynamicObjectValidatorComponent.kt |
+| `repositories` | Repository interfaces | ✅ IMPLEMENTED | DynamicObjectRepository.kt |
+| `transportlayers` | Transport layer | ✅ IMPLEMENTED | DynamicObjectApi.kt, DynamicObjectApiImpl.kt |
 
 ---
 
 ## Core Concepts & Entities
 
-### Pipeline
-- **Purpose**: Represents a workflow/DAG of executable steps
-- **Location**: `model/Pipeline.kt`
+### DynamicObject
+- **Purpose**: Represents a dynamic object that can be a pipeline or script
+- **Location**: `entities/DynamicObject.kt`
 - **Properties**: 
-  - `id`: Unique identifier
-  - `name`: Pipeline name
-  - `description`: Pipeline description
-  - `nodes`: List of PipelineNode
-  - `edges`: List of connections
-  - `status`: ACTIVE, INACTIVE, ARCHIVED
+  - `id`: Unique identifier (scriptId + version)
+  - `scriptId`: Script identifier
+  - `version`: Version number
+  - `type`: Type (PIPELINE or SCRIPT)
+  - `status`: Status (ACTIVE, INACTIVE, etc.)
+  - `isMain`: Whether it's the main version
+  - `content`: The content (pipeline or script data)
   - `createdAt`, `updatedAt`: Timestamps
 
-### PipelineNode
-- **Purpose**: Individual step/task in a pipeline
-- **Location**: `model/PipelineNode.kt`
+### PipelinePojo
+- **Purpose**: Plain old Java object for pipeline data
+- **Location**: `entities/pojos/PipelinePojo.kt`
 - **Properties**:
-  - `id`: Node identifier
-  - `type`: NODE_TYPE (processor, input, output, conditional, etc.)
-  - `name`: Node name
-  - `configuration`: Key-value config map
-  - `position`: X, Y coordinates for visual representation
+  - Pipeline-specific data structure
 
-### Pipeline Edges
-- **Purpose**: Connections between nodes
+### ScriptPojo
+- **Purpose**: Plain old Java object for script data
+- **Location**: `entities/pojos/ScriptPojo.kt`
 - **Properties**:
-  - `source`: Source node ID
-  - `target`: Target node ID
-  - `condition`: Optional condition expression
-
+  - Script-specific data structure
 ---
 
-## API Endpoints (To Be Implemented)
+## API Endpoints (Implemented)
 
-### Pipeline Management
+### Dynamic Object Management
 ```
-POST   /api/v1/pipelines              → Create new pipeline
-GET    /api/v1/pipelines              → List all pipelines
-GET    /api/v1/pipelines/{id}         → Get pipeline details
-PUT    /api/v1/pipelines/{id}         → Update pipeline
-DELETE /api/v1/pipelines/{id}         → Delete pipeline
-```
-
-### Pipeline Execution
-```
-POST   /api/v1/pipelines/{id}/execute → Execute pipeline
-GET    /api/v1/pipelines/{id}/status  → Get execution status
-GET    /api/v1/pipelines/{id}/history → Get execution history
+GET    /api/v1/dynamic-object/query              → Query all dynamic objects
+GET    /api/v1/dynamic-object/{id}/version/{version} → Get dynamic object by ID and version
+POST   /api/v1/dynamic-object                    → Save a dynamic object
 ```
 
 ### Health & Monitoring (via Spring Actuator)
@@ -143,12 +135,15 @@ GET    /actuator/prometheus            → Prometheus metrics
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | Language | Kotlin | Latest  |
-| Framework | Spring Boot | 3.x     |
+| Framework | Spring Boot | 4.1.0-M4 |
 | Build | Maven | 3.6+    |
-| JVM | Java | 25+     |
+| JVM | Java | 21       |
 | Testing | JUnit 5, Mockito | Latest  |
-| Database | TBD | -       |
-| API Documentation | SpringDoc OpenAPI | -       |
+| Database | MongoDB | Latest  |
+| Cache | Redis | Latest  |
+| Message Queue | RabbitMQ | Latest  |
+| WebSocket | Spring WebSocket | Latest  |
+| API Documentation | SpringDoc OpenAPI | 3.0.2   |
 
 ---
 
@@ -158,12 +153,18 @@ GET    /actuator/prometheus            → Prometheus metrics
 spring:
   application:
     name: abeflow-service
-  jpa:
-    hibernate:
-      ddl-auto: validate
-  datasource:
-    url: jdbc:h2:mem:testdb  # TBD: Change for production
-    driverClassName: org.h2.Driver
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/abeflow
+      auto-index-creation: true
+    redis:
+      host: localhost
+      port: 6379
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: abeflow_user
+    password: abeflow_pass
 
 server:
   port: 8080
@@ -293,14 +294,14 @@ java -jar target/abeflow-service-1.0.0.jar
 ## Integration Points
 
 ### Completed
+- ✅ Database (MongoDB)
+- ✅ Message Queue (RabbitMQ)
+- ✅ Cache (Redis)
 - ✅ Health & Monitoring (Spring Boot Actuator)
+- ✅ API Documentation (SpringDoc OpenAPI)
 
 ### To Be Integrated
-- [ ] Database (H2, PostgreSQL, or MongoDB)
-- [ ] Message Queue (RabbitMQ or Kafka for async pipeline execution)
-- [ ] Cache (Redis for performance)
 - [ ] Logging (SLF4J + Logback)
-- [ ] API Documentation (Swagger/OpenAPI)
 - [ ] Authentication/Authorization (Spring Security)
 
 ---
@@ -316,4 +317,3 @@ java -jar target/abeflow-service-1.0.0.jar
 - **Document complex logic** with comments
 - **Use DTOs** for API responses to decouple from entities
 - **Always include unit tests** for new features
-

@@ -27,7 +27,7 @@ class DynamicObjectRepositoryImpl(
         val replacer = Aggregation.replaceRoot("document")
         val exclude = Aggregation.project().andExclude("content")
         val group = Aggregation.group("id.scriptId")
-            .first($$$"$ROOT").`as`("document")
+            .first($$"$ROOT").`as`("document")
 
         val agg = Aggregation.newAggregation(sort, group, replacer, exclude)
 

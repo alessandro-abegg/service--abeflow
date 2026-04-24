@@ -18,10 +18,31 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - `config/`: Configuration classes
   - `RabbitMQConfig.kt`: RabbitMQ messaging configuration
   - `RedisConfig.kt`: Redis caching configuration
-- `datasources/`: Data source and repository layer (placeholder for external data access)
-- `entities/`: Domain entities and models (placeholder for entity definitions)
-- `iteractors/`: Business logic and interactor implementations (placeholder for use case implementations)
-- `transportlayers/`: HTTP transport layer, controllers, and request/response DTOs (placeholder for REST endpoints)
+- `datasources/`: Data source and repository layer
+  - `dynamicobject/`: Dynamic object data access
+    - `DynamicObjectRepositoryImpl.kt`: MongoDB aggregation queries and repository implementation
+    - `DynamicObjectRepositoryMongo.kt`: MongoDB repository interface
+    - `mappers/`: Mapping functions between entities and models
+      - `DynamicObjectMapper.kt`: Entity-model mapping utilities
+    - `model/`: MongoDB document models
+- `entities/`: Domain entities and models
+  - `DynamicObject.kt`: Main domain entity
+  - `DynamicObjectStatus.kt`: Status enumeration
+  - `DynamicObjectType.kt`: Type enumeration
+  - `pojos/`: Plain old Java objects
+    - `IPojo.kt`: Base interface for POJOs
+    - `PipelinePojo.kt`: Pipeline data structure
+    - `ScriptPojo.kt`: Script data structure
+- `iteractors/`: Business logic and interactor implementations
+  - `DynamicObjectService.kt`: Business logic for dynamic objects
+  - `components/`: Reusable components
+    - `DynamicObjectValidatorComponent.kt`: Validation logic component
+- `repositories/`: Repository interfaces
+  - `DynamicObjectRepository.kt`: Repository interface for dynamic objects
+- `transportlayers/`: HTTP transport layer, controllers, and request/response DTOs
+  - `DynamicObjectApi.kt`: API interface
+  - `impl/`: API implementations
+    - `DynamicObjectApiImpl.kt`: REST API implementation
 
 ### Resources (`src/main/resources/`)
 - `application.yaml`: Application configuration and properties
