@@ -1,6 +1,6 @@
 package br.com.abegg.abeflow.service.entities
 
-enum class ObjectType {
+enum class DynamicObjectType {
     SCRIPT,
     PIPELINE
 }
