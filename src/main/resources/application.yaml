@@ -1,16 +1,9 @@
 spring:
   application:
     name: abeflow-service
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.MySQLDialect
-  datasource:
-    url: jdbc:mysql://localhost:3306/abeflow?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: abeflow_user
-    password: abeflow_pass
-    driver-class-name: com.mysql.cj.jdbc.Driver
   data:
+    mongodb:
+      uri: mongodb://localhost:27017/abeflow
     redis:
       host: localhost
       port: 6379

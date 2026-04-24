@@ -1,18 +1,17 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: abeflow_mysql
+  mongodb:
+    image: mongo:7-jammy
+    container_name: abeflow_mongodb
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: abeflow
-      MYSQL_USER: abeflow_user
-      MYSQL_PASSWORD: abeflow_pass
+      MONGO_INITDB_DATABASE: abeflow
+      MONGO_INITDB_ROOT_USERNAME: abeflow_user
+      MONGO_INITDB_ROOT_PASSWORD: abeflow_pass
     ports:
-      - "3306:3306"
+      - "27017:27017"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mongodb_data:/data/db
     networks:
       - abeflow_network
 
@@ -41,7 +40,7 @@ services:
       - abeflow_network
 
 volumes:
-  mysql_data:
+  mongodb_data:
   redis_data:
   rabbitmq_data:
 

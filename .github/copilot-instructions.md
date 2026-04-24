@@ -7,6 +7,7 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - **Language**: Kotlin
 - **Framework**: Spring Boot
 - **Build Tool**: Maven
+- **Database**: MongoDB
 - **Configuration**: YAML-based application properties
 - **Package Structure**: br.com.abegg.abeflow.service
 
@@ -62,4 +63,3 @@ The project is licensed under Apache License 2.0 modified by the Commons Clause,
 - No custom health endpoint controllers needed
 - Actuator endpoints available at `/actuator` (health, metrics, info, prometheus)
 - Health probes (liveness, readiness) enabled for Kubernetes deployments
-

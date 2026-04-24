@@ -1,5 +1,6 @@
-package br.com.abegg.abeflow.service.entities;
+package br.com.abegg.abeflow.service.entities
 
-public enum ObjectType {
-
+enum class ObjectType {
+    SCRIPT,
+    PIPELINE
 }
