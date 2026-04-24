@@ -9,5 +9,6 @@ data class DynamicObject(
     val status: DynamicObjectStatus,
     val author: String,
     val createdAt: String,
+    val isMain: Boolean,
     val content: Map<String, Any>
 )
