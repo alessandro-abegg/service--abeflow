@@ -17,7 +17,7 @@ data class DynamicObjectModel(
     val description: String,
     val type: DynamicObjectType,
     val status: DynamicObjectStatus,
-    val author: String,
+    val createdBy: String,
     val createdAt: String,
     val isMain: Boolean,
     val content: Map<String, Any>

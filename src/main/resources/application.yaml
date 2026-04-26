@@ -13,6 +13,11 @@ spring:
     port: 5672
     username: abeflow_user
     password: abeflow_pass
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/abeflow
 
 server:
   port: 8080

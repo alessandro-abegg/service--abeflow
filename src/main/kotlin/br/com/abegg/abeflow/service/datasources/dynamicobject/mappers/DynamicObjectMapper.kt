@@ -12,7 +12,7 @@ fun DynamicObjectModel.toEntity(): DynamicObject {
         description = this.description,
         type = this.type,
         status = this.status,
-        author = this.author,
+        createdBy = this.createdBy,
         createdAt = this.createdAt,
         isMain = this.isMain,
         content = this.content
@@ -29,7 +29,7 @@ fun DynamicObject.toModel(): DynamicObjectModel {
         description = this.description,
         type = this.type,
         status = this.status,
-        author = this.author,
+        createdBy = this.createdBy,
         createdAt = this.createdAt,
         content = this.content,
         isMain = this.isMain

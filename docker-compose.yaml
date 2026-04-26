@@ -39,10 +39,75 @@ services:
     networks:
       - abeflow_network
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: abeflow_keycloak
+    environment:
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://mysql:3306/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true" # Required for healthcheck to function
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    command: start-dev --import-realm
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./scripts/keycloak:/opt/keycloak/data/import
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - abeflow_network
+    healthcheck:
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep '200 OK'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  keycloak-init:
+    image: curlimages/curl:latest
+    container_name: abeflow_keycloak_init
+    entrypoint: sh
+    command: -c "apk add --no-cache bash && bash /scripts/init-keycloak.sh"
+    volumes:
+      - ./scripts/keycloak:/scripts
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - abeflow_network
+
+  mysql:
+    image: mysql:8
+    container_name: abeflow_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: keycloak
+      MYSQL_USER: keycloak
+      MYSQL_PASSWORD: keycloak
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - abeflow_network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
 volumes:
   mongodb_data:
   redis_data:
   rabbitmq_data:
+  mysql_data:
 
 networks:
   abeflow_network:

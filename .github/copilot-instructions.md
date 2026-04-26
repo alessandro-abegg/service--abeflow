@@ -8,6 +8,10 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - **Framework**: Spring Boot
 - **Build Tool**: Maven
 - **Database**: MongoDB
+- **Cache**: Redis
+- **Message Queue**: RabbitMQ
+- **Authentication Database**: MySQL (for Keycloak)
+- **Authentication**: OAuth2 with Keycloak (RHSSO)
 - **Configuration**: YAML-based application properties
 - **Package Structure**: br.com.abegg.abeflow.service
 
@@ -18,6 +22,7 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - `config/`: Configuration classes
   - `RabbitMQConfig.kt`: RabbitMQ messaging configuration
   - `RedisConfig.kt`: Redis caching configuration
+  - `oauth2/SecurityConfig.kt`: Security configuration for OAuth2 resource server
 - `datasources/`: Data source and repository layer
   - `dynamicobject/`: Dynamic object data access
     - `DynamicObjectRepositoryImpl.kt`: MongoDB aggregation queries and repository implementation
@@ -62,6 +67,7 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - Prefer functional programming styles where appropriate in Kotlin.
 
 ## Development Workflow
+- Start Docker services: `docker-compose up -d` (includes MongoDB, Redis, RabbitMQ, MySQL, Keycloak)
 - Use Maven for building: `./mvnw clean compile`
 - Run tests: `./mvnw test`
 - Run application: `./mvnw spring-boot:run`
@@ -84,3 +90,50 @@ The project is licensed under Apache License 2.0 modified by the Commons Clause,
 - No custom health endpoint controllers needed
 - Actuator endpoints available at `/actuator` (health, metrics, info, prometheus)
 - Health probes (liveness, readiness) enabled for Kubernetes deployments
+
+## Authentication
+- The project uses **Keycloak (RHSSO)** for identity and access management
+- Keycloak is configured with MySQL database for persistent storage of realms and configurations
+- Configured as OAuth2 resource server with JWT validation
+- Pre-configured realm "abeflow" with client "abeflow-service" in Docker setup
+- Keycloak admin console available at http://localhost:8180 (admin/admin)
+- Service account authentication for API access
+
+## Docker Compose Standards & Best Practices
+
+### Service Startup Order & Health Checks
+- **Pattern**: Services with dependencies use `depends_on` with `condition: service_healthy`
+- **Implementation**: Each service that provides external dependencies must include a `healthcheck` block
+- **Order**: Critical order for startup:
+  1. `mysql` - Database layer (verified with `mysqladmin ping`)
+  2. `keycloak` - Auth service (depends on mysql, verified with HTTP health endpoint `/health/ready`)
+  3. `keycloak-init` - Post-startup configuration (depends on keycloak being healthy)
+  4. Other services (`mongodb`, `redis`, `rabbitmq`) - Can start independently
+
+### Keycloak Configuration in Docker
+- **Environment Variables**: Use `KC_` prefix for Keycloak configuration
+- **Important**: `KC_HEALTH_ENABLED: "true"` is required for healthcheck to function
+- **Admin Setup**: Use `KC_BOOTSTRAP_ADMIN_USERNAME` and `KC_BOOTSTRAP_ADMIN_PASSWORD` for automatic admin creation
+- **Mode**: Use `start-dev` command for development with MySQL backend to allow realm import
+- **Realm Import**: Place realm JSON files in `scripts/keycloak/` directory and mount as `/opt/keycloak/data/import`
+
+### Health Check Best Practices
+- **MySQL**: `test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]`
+- **Keycloak**: Custom CMD-SHELL to verify HTTP 200 response from `/health/ready`
+- **Parameters**:
+  - `interval: 10s` - Check every 10 seconds
+  - `timeout: 5s` - Wait 5 seconds for response
+  - `retries: 5` - Retry 5 times before marking unhealthy
+  - `start_period: 20-30s` - Grace period before first check (database needs more time)
+
+### Recommended Docker Compose Cleanup
+```bash
+# Complete cleanup (removes volumes)
+docker-compose down -v
+
+# Then restart
+docker-compose up -d
+
+# Monitor services
+docker-compose logs -f keycloak
+```
