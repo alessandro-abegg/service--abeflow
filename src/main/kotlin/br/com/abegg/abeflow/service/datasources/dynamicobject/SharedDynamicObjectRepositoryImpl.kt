@@ -26,38 +26,14 @@ class SharedDynamicObjectRepositoryImpl(
     }
 
     override fun save(data: SharedDynamicObject): SharedDynamicObject {
-        val existing = findByDynamicObject(data.dynamicObjectId, data.dynamicObjectVersion)
-        val dataToSave = if (existing != null) {
-            // Allow if the user is the owner or already shared with
-            if (existing.sharedBy != data.sharedBy && data.sharedBy !in existing.sharedWith) {
-                throw IllegalAccessException("Only the owner or shared users can manage shares")
-            }
-            // Keep the original owner
-            data.copy(sharedBy = existing.sharedBy)
-        } else {
-            data
-        }
-        return sharedDynamicObjectRepositoryMongo.save(dataToSave.toModel()).toEntity()
+        return sharedDynamicObjectRepositoryMongo.save(data.toModel()).toEntity()
     }
 
-    override fun unshare(dynamicObjectId: String, version: Integer, authenticatedUser: String): Boolean {
-        val existing = findByDynamicObject(dynamicObjectId, version) ?: return false
-
-        return if (existing.sharedBy == authenticatedUser) {
-            // Owner: delete the entire share
-            val query = Query(
-                Criteria("dynamicObjectId").`is`(dynamicObjectId)
-                    .and("dynamicObjectVersion").`is`(version)
-            )
-            mongoTemplate.remove(query, SharedDynamicObjectModel::class.java).deletedCount > 0
-        } else if (authenticatedUser in existing.sharedWith) {
-            // Shared user: remove themselves from the list
-            val updatedSharedWith = existing.sharedWith - authenticatedUser
-            val updated = existing.copy(sharedWith = updatedSharedWith)
-            save(updated)
-            true
-        } else {
-            false
-        }
+    override fun delete(dynamicObjectId: String, version: Integer): Boolean {
+        val query = Query(
+            Criteria("dynamicObjectId").`is`(dynamicObjectId)
+                .and("dynamicObjectVersion").`is`(version)
+        )
+        return mongoTemplate.remove(query, SharedDynamicObjectModel::class.java).deletedCount > 0
     }
 }

@@ -7,5 +7,5 @@ interface SharedDynamicObjectRepository {
 
     fun save(data: SharedDynamicObject): SharedDynamicObject
 
-    fun unshare(dynamicObjectId: String, version: Integer, authenticatedUser: String): Boolean
+    fun delete(dynamicObjectId: String, version: Integer): Boolean
 }

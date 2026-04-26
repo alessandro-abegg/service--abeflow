@@ -25,7 +25,7 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
   - `oauth2/SecurityConfig.kt`: Security configuration for OAuth2 resource server
 - `datasources/`: Data source and repository layer
   - `dynamicobject/`: Dynamic object data access
-    - `DynamicObjectRepositoryImpl.kt`: MongoDB aggregation queries and repository implementation with access control filters
+    - `DynamicObjectRepositoryImpl.kt`: MongoDB aggregation queries and repository implementation
     - `DynamicObjectRepositoryMongo.kt`: MongoDB repository interface
     - `mappers/`: Mapping functions between entities and models
       - `DynamicObjectMapper.kt`: Entity-model mapping utilities
@@ -39,11 +39,11 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
     - `PipelinePojo.kt`: Pipeline data structure
     - `ScriptPojo.kt`: Script data structure
 - `iteractors/`: Business logic and interactor implementations
-  - `DynamicObjectService.kt`: Business logic for dynamic objects - orchestrates user extraction and access control
+  - `DynamicObjectService.kt`: Business logic for dynamic objects - orchestrates user extraction, validation, and access control
   - `components/`: Reusable components
     - `DynamicObjectValidatorComponent.kt`: Validation logic component
 - `repositories/`: Repository interfaces
-  - `DynamicObjectRepository.kt`: Repository interface with user-based access control methods
+  - `DynamicObjectRepository.kt`: Repository interface for data access
 - `transportlayers/`: HTTP transport layer, controllers, and request/response DTOs
   - `DynamicObjectApi.kt`: API interface
   - `impl/`: API implementations
@@ -57,6 +57,25 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 ### Test Code (`src/test/kotlin/br/com/abegg/abeflow/service/`)
 - `AbeflowApplicationTests.kt`: Main application integration tests
 - `core/usecase/CreatePipelineUseCaseTest.kt`: Use case unit tests
+
+## Architectural Layering & Responsibilities
+
+### Service Layer (Iteractors)
+- **Role**: Primary orchestrator of business logic and domain rules.
+- **Responsibilities**:
+  - Validation of input data and business rules.
+  - Enforcement of complex access control logic (e.g., checking if a user is the owner or has specific rights before an action).
+  - Deciding between different repository actions (e.g., choosing to delete vs update in an "unshare" operation).
+  - Orchestrating calls between multiple repositories or external services.
+  - Ensuring data consistency before calling the repository.
+
+### Repository Layer (Data Access)
+- **Role**: Pure data access and persistence layer.
+- **Responsibilities**:
+  - Executing basic CRUD operations (Create, Read, Update, Delete).
+  - Implementing data-specific queries (e.g., MongoDB aggregations, specific filters).
+  - Mapping between Domain Entities and Database Models (Entities <-> Models).
+  - **Restriction**: Should NOT contain business logic, complex permission checks, or conditional flows that decide *what* action to take. It should only execute the action it's told to perform.
 
 ## Coding Standards
 - Follow Kotlin coding conventions.
@@ -84,6 +103,8 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - When adding dependencies, check for compatibility with the Apache 2.0 + Commons Clause license.
 - Behave as a senior software engineer, providing expert-level guidance, best practices, code quality assurance, and architectural insights.
 - Guarantee security in all code suggestions, protecting the entire context by adhering to authentication, access control, and data protection standards.
+- **MANDATORY**: Always place business logic in the Service (Iteractors) layer. Repositories must remain thin and focused strictly on data persistence.
+- **SELF-MAINTENANCE**: Every time a significant architectural change, new design pattern, or project-wide standard is introduced or modified, the AI Assistant **must** proactively update this `copilot-instructions.md` file to reflect the new state of the project. This ensures the context remains accurate and self-sustaining.
 
 ## License
 The project is licensed under Apache License 2.0 modified by the Commons Clause, which allows use and modification but prohibits selling the software or services based on it.
@@ -150,20 +171,20 @@ docker-compose logs -f keycloak
 
 ### User-Based Access Control Flow
 1. **Controller/API Layer**: Extracts authenticated user from JWT token via `SecurityContextHolder.getContext().authentication.name`
-2. **Use Case/Service Layer** (`DynamicObjectService`): Receives the authenticated user as a parameter and orchestrates the business logic
-3. **Repository Layer** (`DynamicObjectRepository`): Receives the authenticated user and applies access control filters
+2. **Use Case/Service Layer** (`DynamicObjectService`): Receives the authenticated user as a parameter and orchestrates the business logic and permission checks.
+3. **Repository Layer** (`DynamicObjectRepository`): Receives the authenticated user (when filtering is required by query) and applies basic data filters.
 
 ### Access Rules for DynamicObjects
 - **Query & Get Methods**: Return items where:
   - The user is the creator (`createdBy == authenticatedUser`), OR
   - The object is published (`isPublished == true`)
-- **Save Method**: The caller (use case) is responsible for authorization checks before saving
+- **Save/Delete Methods**: The Service layer is responsible for authorization checks before calling the repository.
 
 ### Implementation Notes
 - The `isPublished: Boolean = false` field on `DynamicObject` and `DynamicObjectModel` controls visibility
 - Repository methods use MongoDB aggregation pipeline with `Criteria.orOperator()` for efficient filtering
 - All repository methods with access control requirements accept `authenticatedUser: String` parameter
-- Access control is applied at the data layer to ensure no unauthorized data leaks
+- Access control is applied at the service layer for mutations and data layer for queries to ensure no unauthorized data leaks
 
 ## User Authentication Flow in Controllers
 
@@ -176,11 +197,11 @@ docker-compose logs -f keycloak
 2. **Service Layer** (`DynamicObjectService`):
    - Receives `authenticatedUser: String` as a parameter
    - Orchestrates business logic and validation
-   - Passes the user to the repository for access control
+   - Passes the user to the repository for data access
 
 3. **Repository Layer** (`DynamicObjectRepositoryImpl`):
-   - Applies access control filters using the `authenticatedUser` parameter
-   - Ensures only authorized data is returned
+   - Applies access control filters using the `authenticatedUser` parameter (for queries)
+   - Performs requested data operation
 
 ### Example in Controller
 ```kotlin
