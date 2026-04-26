@@ -4,12 +4,14 @@ import br.com.abegg.abeflow.service.datasources.dynamicobject.mappers.toEntity
 import br.com.abegg.abeflow.service.datasources.dynamicobject.mappers.toModel
 import br.com.abegg.abeflow.service.datasources.dynamicobject.model.DynamicObjectKey
 import br.com.abegg.abeflow.service.datasources.dynamicobject.model.DynamicObjectModel
+import br.com.abegg.abeflow.service.datasources.dynamicobject.model.SharedDynamicObjectModel
 import br.com.abegg.abeflow.service.entities.DynamicObject
 import br.com.abegg.abeflow.service.repositories.DynamicObjectRepository
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
@@ -20,9 +22,22 @@ class DynamicObjectRepositoryImpl(
 ) : DynamicObjectRepository {
 
     override fun query(authenticatedUser: String): List<DynamicObject> {
+        // Get all shared dynamic object ids and versions
+        val sharedObjects = mongoTemplate.find(
+            Query(Criteria("sharedWith").`in`(authenticatedUser)),
+            SharedDynamicObjectModel::class.java
+        ).map { it.dynamicObjectId to it.dynamicObjectVersion }
+
+        val sharedIds = sharedObjects.map { it.first }.toSet()
+        val sharedVersions = sharedObjects.map { it.second }.toSet()
+
         val accessCriteria = Criteria().orOperator(
             Criteria("createdBy").`is`(authenticatedUser),
-            Criteria("isPublished").`is`(true)
+            Criteria("isPublished").`is`(true),
+            Criteria().andOperator(
+                Criteria("id.id").`in`(sharedIds),
+                Criteria("id.version").`in`(sharedVersions)
+            )
         )
 
         val sortByMainAndVersion = Aggregation.sort(
@@ -62,8 +77,17 @@ class DynamicObjectRepositoryImpl(
         val model = this.dynamicObjectRepositoryMongo.findByIdOrNull(DynamicObjectKey(id, version))
             ?: return null
 
-        // Check access: user is creator OR object is published
-        val hasAccess = model.createdBy == authenticatedUser || model.isPublished
+        // Check access: user is creator OR object is published OR object is shared with user
+        val isShared = mongoTemplate.exists(
+            Query(
+                Criteria("dynamicObjectId").`is`(id)
+                    .and("dynamicObjectVersion").`is`(version)
+                    .and("sharedWith").`in`(authenticatedUser)
+            ),
+            SharedDynamicObjectModel::class.java
+        )
+
+        val hasAccess = model.createdBy == authenticatedUser || model.isPublished || isShared
         if (!hasAccess) return null
 
         return model.toEntity()
