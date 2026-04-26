@@ -3,7 +3,7 @@ package br.com.abegg.abeflow.service.datasources.dynamicobject.model
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
-data class Share(
+data class ShareModel(
     val sharedBy: String,
     val sharedWith: String,
     val canReshare: Boolean = false
@@ -13,7 +13,7 @@ data class Share(
 data class SharedDynamicObjectModel(
     @Id val id: String,
     val dynamicObjectId: String,
-    val dynamicObjectVersion: Integer,
+    val dynamicObjectVersion: Int,
     val sharedBy: String,
-    val shares: List<Share> = emptyList()
+    val shares: List<ShareModel> = emptyList()
 )

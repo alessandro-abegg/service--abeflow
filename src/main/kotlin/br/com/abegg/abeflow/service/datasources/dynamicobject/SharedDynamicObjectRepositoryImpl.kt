@@ -16,7 +16,7 @@ class SharedDynamicObjectRepositoryImpl(
     val mongoTemplate: MongoTemplate
 ) : SharedDynamicObjectRepository {
 
-    override fun findByDynamicObject(dynamicObjectId: String, version: Integer): SharedDynamicObject? {
+    override fun findByDynamicObject(dynamicObjectId: String, version: Int): SharedDynamicObject? {
         val query = Query(
             Criteria("dynamicObjectId").`is`(dynamicObjectId)
                 .and("dynamicObjectVersion").`is`(version)
@@ -29,7 +29,7 @@ class SharedDynamicObjectRepositoryImpl(
         return sharedDynamicObjectRepositoryMongo.save(data.toModel()).toEntity()
     }
 
-    override fun delete(dynamicObjectId: String, version: Integer): Boolean {
+    override fun delete(dynamicObjectId: String, version: Int): Boolean {
         val query = Query(
             Criteria("dynamicObjectId").`is`(dynamicObjectId)
                 .and("dynamicObjectVersion").`is`(version)
