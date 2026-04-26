@@ -60,6 +60,28 @@ class SharedDynamicObjectService(
         }
     }
 
+    fun revokeShare(dynamicObjectId: String, version: Int, targetUser: String, authenticatedUser: String): Boolean {
+        val existing = repository.findByDynamicObject(dynamicObjectId, version) ?: return false
+
+        // Check if the authenticated user has permission to revoke shares
+        val isOwner = existing.sharedBy == authenticatedUser
+        val userShareInfo = existing.sharedWith.find { it.sharedWith == authenticatedUser }
+        val canRevoke = isOwner || (userShareInfo?.canReshare == true)
+
+        if (!canRevoke) {
+            throw IllegalAccessException("User does not have permission to revoke shares")
+        }
+
+        val updatedSharedWith = existing.sharedWith.filter { it.sharedWith != targetUser }
+        
+        // If nothing changed (targetUser wasn't in the list), just return false
+        if (updatedSharedWith.size == existing.sharedWith.size) return false
+
+        val updated = existing.copy(sharedWith = updatedSharedWith)
+        repository.save(updated)
+        return true
+    }
+
     fun getShares(dynamicObjectId: String, version: Int, authenticatedUser: String): SharedDynamicObject? {
         val shares = repository.findByDynamicObject(dynamicObjectId, version)
         return shares?.takeIf { s ->
