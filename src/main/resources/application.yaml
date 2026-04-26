@@ -50,3 +50,26 @@ abeflow:
   api:
     version: v1
     base-path: /api/v1
+
+logbook:
+  include:
+    - /api/**
+  exclude:
+    - /actuator/**
+  obfuscate:
+    headers:
+      - Authorization
+      - X-API-Key
+      - X-Auth-Token
+    parameters:
+      - password
+      - secret
+      - token
+      - access_token
+      - refresh_token
+    body:
+      - password
+      - secret
+      - token
+      - accessToken
+      - refreshToken

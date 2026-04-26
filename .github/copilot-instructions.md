@@ -82,6 +82,8 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - Suggest using Kotlin's features like data classes, sealed classes, and coroutines where beneficial.
 - Avoid suggesting proprietary or paid solutions; keep everything open-source friendly.
 - When adding dependencies, check for compatibility with the Apache 2.0 + Commons Clause license.
+- Behave as a senior software engineer, providing expert-level guidance, best practices, code quality assurance, and architectural insights.
+- Guarantee security in all code suggestions, protecting the entire context by adhering to authentication, access control, and data protection standards.
 
 ## License
 The project is licensed under Apache License 2.0 modified by the Commons Clause, which allows use and modification but prohibits selling the software or services based on it.
