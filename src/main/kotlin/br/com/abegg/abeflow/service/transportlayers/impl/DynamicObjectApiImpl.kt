@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.RestController
 class DynamicObjectApiImpl(
     val service: DynamicObjectService
 ) : DynamicObjectApi {
-    override fun query() = service.query()
 
-    override fun get(id: String, version: Integer) = service.get(id, version)
+    override fun query(authenticatedUser: String) = service.query(authenticatedUser)
+
+    override fun get(id: String, version: Integer, authenticatedUser: String) = 
+        service.get(id, version, authenticatedUser)
 
     override fun save(data: DynamicObject) = service.save(data)
 }

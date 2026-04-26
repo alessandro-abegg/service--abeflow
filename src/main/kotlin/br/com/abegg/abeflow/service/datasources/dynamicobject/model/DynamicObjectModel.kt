@@ -20,6 +20,7 @@ data class DynamicObjectModel(
     val createdBy: String,
     val createdAt: String,
     val isMain: Boolean,
+    val isPublished: Boolean = false,
     val content: Map<String, Any>
 )
 

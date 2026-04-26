@@ -11,16 +11,16 @@ interface DynamicObjectApi {
     @GetMapping("/query")
     @Operation(
         summary = "Query all dynamic objects",
-        description = "Returns a list of all dynamic objects in the system."
+        description = "Returns a list of dynamic objects accessible by the authenticated user. Access is granted for objects created by the user or marked as published."
     )
-    fun query(): List<DynamicObject>
+    fun query(authenticatedUser: String): List<DynamicObject>
 
     @GetMapping("/{id}/version/{version}")
     @Operation(
         summary = "Get a dynamic object by ID and version",
-        description = "Returns a specific dynamic object based on its ID and version. If the object does not exist, it returns null."
+        description = "Returns a specific dynamic object if accessible by the authenticated user. Access is granted if the object was created by the user or is marked as published."
     )
-    fun get(id: String, version: Integer): DynamicObject?
+    fun get(id: String, version: Integer, authenticatedUser: String): DynamicObject?
 
     @PostMapping
     @Operation(

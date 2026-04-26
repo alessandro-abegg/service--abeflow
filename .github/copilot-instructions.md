@@ -25,13 +25,13 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
   - `oauth2/SecurityConfig.kt`: Security configuration for OAuth2 resource server
 - `datasources/`: Data source and repository layer
   - `dynamicobject/`: Dynamic object data access
-    - `DynamicObjectRepositoryImpl.kt`: MongoDB aggregation queries and repository implementation
+    - `DynamicObjectRepositoryImpl.kt`: MongoDB aggregation queries and repository implementation with access control filters
     - `DynamicObjectRepositoryMongo.kt`: MongoDB repository interface
     - `mappers/`: Mapping functions between entities and models
       - `DynamicObjectMapper.kt`: Entity-model mapping utilities
     - `model/`: MongoDB document models
 - `entities/`: Domain entities and models
-  - `DynamicObject.kt`: Main domain entity
+  - `DynamicObject.kt`: Main domain entity with `isPublished` field for access control
   - `DynamicObjectStatus.kt`: Status enumeration
   - `DynamicObjectType.kt`: Type enumeration
   - `pojos/`: Plain old Java objects
@@ -39,11 +39,11 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
     - `PipelinePojo.kt`: Pipeline data structure
     - `ScriptPojo.kt`: Script data structure
 - `iteractors/`: Business logic and interactor implementations
-  - `DynamicObjectService.kt`: Business logic for dynamic objects
+  - `DynamicObjectService.kt`: Business logic for dynamic objects - orchestrates user extraction and access control
   - `components/`: Reusable components
     - `DynamicObjectValidatorComponent.kt`: Validation logic component
 - `repositories/`: Repository interfaces
-  - `DynamicObjectRepository.kt`: Repository interface for dynamic objects
+  - `DynamicObjectRepository.kt`: Repository interface with user-based access control methods
 - `transportlayers/`: HTTP transport layer, controllers, and request/response DTOs
   - `DynamicObjectApi.kt`: API interface
   - `impl/`: API implementations
@@ -62,9 +62,10 @@ Abeflow is an open-source service designed to generate dynamic pipelines in both
 - Follow Kotlin coding conventions.
 - Use Spring Boot best practices for REST APIs, configuration, and dependency injection.
 - Write unit tests for all new features using JUnit and Mockito.
-- Use meaningful variable and function names.
-- Add comments for complex logic.
-- Prefer functional programming styles where appropriate in Kotlin.
+- Use meaningful variable and method names that are self-explanatory.
+- Avoid unnecessary comments for simple operations - let the code speak for itself.
+- Add comments only for complex business logic, algorithms, or non-obvious decisions.
+- Prefer descriptive variable names over short/abbreviated ones (e.g., `accessCriteria` instead of `filter`).
 
 ## Development Workflow
 - Start Docker services: `docker-compose up -d` (includes MongoDB, Redis, RabbitMQ, MySQL, Keycloak)
@@ -137,3 +138,59 @@ docker-compose up -d
 # Monitor services
 docker-compose logs -f keycloak
 ```
+
+## Authorization & Access Control Pattern
+
+### User Extraction from JWT Token
+- The authenticated user is extracted from the JWT token provided by Keycloak
+- User extraction happens at the API/Controller layer using Spring Security's `SecurityContextHolder`
+- The username is then passed as a parameter through the use case layers
+
+### User-Based Access Control Flow
+1. **Controller/API Layer**: Extracts authenticated user from JWT token via `SecurityContextHolder.getContext().authentication.name`
+2. **Use Case/Service Layer** (`DynamicObjectService`): Receives the authenticated user as a parameter and orchestrates the business logic
+3. **Repository Layer** (`DynamicObjectRepository`): Receives the authenticated user and applies access control filters
+
+### Access Rules for DynamicObjects
+- **Query & Get Methods**: Return items where:
+  - The user is the creator (`createdBy == authenticatedUser`), OR
+  - The object is published (`isPublished == true`)
+- **Save Method**: The caller (use case) is responsible for authorization checks before saving
+
+### Implementation Notes
+- The `isPublished: Boolean = false` field on `DynamicObject` and `DynamicObjectModel` controls visibility
+- Repository methods use MongoDB aggregation pipeline with `Criteria.orOperator()` for efficient filtering
+- All repository methods with access control requirements accept `authenticatedUser: String` parameter
+- Access control is applied at the data layer to ensure no unauthorized data leaks
+
+## User Authentication Flow in Controllers
+
+### Implementation Pattern
+1. **Controller Method** (`DynamicObjectApiImpl`):
+   - Receives `authenticatedUser: String` parameter from the route binding
+   - The API framework automatically injects the authenticated user from Spring Security context
+   - Passes the user to the service layer
+
+2. **Service Layer** (`DynamicObjectService`):
+   - Receives `authenticatedUser: String` as a parameter
+   - Orchestrates business logic and validation
+   - Passes the user to the repository for access control
+
+3. **Repository Layer** (`DynamicObjectRepositoryImpl`):
+   - Applies access control filters using the `authenticatedUser` parameter
+   - Ensures only authorized data is returned
+
+### Example in Controller
+```kotlin
+@RestController
+class DynamicObjectApiImpl(val service: DynamicObjectService) : DynamicObjectApi {
+    override fun query(authenticatedUser: String) = service.query(authenticatedUser)
+    override fun get(id: String, version: Integer, authenticatedUser: String) = 
+        service.get(id, version, authenticatedUser)
+}
+```
+
+### Notes
+- The `authenticatedUser` parameter is bound by Spring's `@PathVariable` or method parameters from the request context
+- User information comes from the JWT token validated by the OAuth2 resource server configured in `SecurityConfig.kt`
+- The parameter pattern allows for easy testing and flexibility - can be used with security context or passed explicitly

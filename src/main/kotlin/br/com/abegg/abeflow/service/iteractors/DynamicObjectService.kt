@@ -11,9 +11,9 @@ class DynamicObjectService(
     private val validator: DynamicObjectValidatorComponent
 ) {
 
-    fun query() = repository.query()
+    fun query(authenticatedUser: String) = repository.query(authenticatedUser)
 
-    fun get(id: String, version: Integer) = repository.get(id, version)
+    fun get(id: String, version: Integer, authenticatedUser: String) = repository.get(id, version, authenticatedUser)
 
     fun save(data: DynamicObject): DynamicObject {
         validator.validate(data)

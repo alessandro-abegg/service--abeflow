@@ -9,6 +9,7 @@ import br.com.abegg.abeflow.service.repositories.DynamicObjectRepository
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
@@ -17,23 +18,36 @@ class DynamicObjectRepositoryImpl(
     val dynamicObjectRepositoryMongo: DynamicObjectRepositoryMongo,
     val mongoTemplate: MongoTemplate
 ) : DynamicObjectRepository {
-    override fun query(): List<DynamicObject> {
-        val sort = Aggregation.sort(
+
+    override fun query(authenticatedUser: String): List<DynamicObject> {
+        val accessCriteria = Criteria().orOperator(
+            Criteria("createdBy").`is`(authenticatedUser),
+            Criteria("isPublished").`is`(true)
+        )
+
+        val sortByMainAndVersion = Aggregation.sort(
             Sort.Direction.DESC,
             "isMain",
             "id.version"
         )
 
-        val replacer = Aggregation.replaceRoot("document")
-        val exclude = Aggregation.project().andExclude("content")
-        val group = Aggregation.group("id.scriptId")
+        val matchAccessCriteria = Aggregation.match(accessCriteria)
+        val replaceWithDocument = Aggregation.replaceRoot("document")
+        val excludeContentField = Aggregation.project().andExclude("content")
+        val groupByScriptId = Aggregation.group("id.scriptId")
             .first($$"$ROOT").`as`("document")
 
-        val agg = Aggregation.newAggregation(sort, group, replacer, exclude)
+        val aggregationPipeline = Aggregation.newAggregation(
+            sortByMainAndVersion,
+            groupByScriptId,
+            matchAccessCriteria,
+            replaceWithDocument,
+            excludeContentField
+        )
 
         return mongoTemplate
             .aggregate(
-                agg,
+                aggregationPipeline,
                 "dynamic_objects",
                 DynamicObjectModel::class.java
             ).getMappedResults()
@@ -42,8 +56,18 @@ class DynamicObjectRepositoryImpl(
 
     override fun get(
         id: String,
-        version: Integer
-    ) = this.dynamicObjectRepositoryMongo.findByIdOrNull(DynamicObjectKey(id, version))?.toEntity()
+        version: Integer,
+        authenticatedUser: String
+    ): DynamicObject? {
+        val model = this.dynamicObjectRepositoryMongo.findByIdOrNull(DynamicObjectKey(id, version))
+            ?: return null
+
+        // Check access: user is creator OR object is published
+        val hasAccess = model.createdBy == authenticatedUser || model.isPublished
+        if (!hasAccess) return null
+
+        return model.toEntity()
+    }
 
     override fun save(
         data: DynamicObject
