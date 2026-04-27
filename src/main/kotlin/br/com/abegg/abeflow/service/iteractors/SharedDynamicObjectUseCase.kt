@@ -1,6 +1,6 @@
 package br.com.abegg.abeflow.service.iteractors
 
-import br.com.abegg.abeflow.executor.domain.model.ExecutionRequest
+import br.com.abegg.abeflow.executor.entities.ExecutionRequest
 import br.com.abegg.abeflow.lib.SecurityContext.getUserId
 import br.com.abegg.abeflow.service.config.RabbitMQConfig
 import br.com.abegg.abeflow.service.entities.SharedDynamicObject
@@ -9,7 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 
 @Service
-class SharedDynamicObjectService(
+class SharedDynamicObjectUseCase(
     private val repository: SharedDynamicObjectRepository,
     private val rabbitTemplate: RabbitTemplate
 ) {

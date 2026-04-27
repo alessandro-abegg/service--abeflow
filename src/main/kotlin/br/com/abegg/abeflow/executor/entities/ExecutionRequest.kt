@@ -1,4 +1,4 @@
-package br.com.abegg.abeflow.executor.domain.model
+package br.com.abegg.abeflow.executor.entities
 
 data class ExecutionRequest(
     val dynamicObjectId: String,

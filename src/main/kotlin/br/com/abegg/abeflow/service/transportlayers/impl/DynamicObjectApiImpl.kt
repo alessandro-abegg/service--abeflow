@@ -1,13 +1,13 @@
 package br.com.abegg.abeflow.service.transportlayers.impl
 
 import br.com.abegg.abeflow.service.entities.DynamicObject
-import br.com.abegg.abeflow.service.iteractors.DynamicObjectService
+import br.com.abegg.abeflow.service.iteractors.DynamicObjectUseCase
 import br.com.abegg.abeflow.service.transportlayers.DynamicObjectApi
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class DynamicObjectApiImpl(
-    val service: DynamicObjectService
+    val service: DynamicObjectUseCase
 ) : DynamicObjectApi {
 
     override fun query() = service.query()

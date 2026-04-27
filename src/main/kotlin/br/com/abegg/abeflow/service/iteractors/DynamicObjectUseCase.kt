@@ -7,7 +7,7 @@ import br.com.abegg.abeflow.service.repositories.DynamicObjectRepository
 import org.springframework.stereotype.Service
 
 @Service
-class DynamicObjectService(
+class DynamicObjectUseCase(
     private val repository: DynamicObjectRepository,
     private val validator: DynamicObjectValidatorComponent
 ) {

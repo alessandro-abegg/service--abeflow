@@ -1,6 +1,9 @@
 spring:
   application:
     name: abeflow-service
+  threads:
+    virtual:
+      enabled: true
   data:
     mongodb:
       host: localhost

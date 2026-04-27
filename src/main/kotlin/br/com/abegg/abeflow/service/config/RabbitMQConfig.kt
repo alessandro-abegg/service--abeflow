@@ -3,10 +3,11 @@ package br.com.abegg.abeflow.service.config
 import org.springframework.amqp.core.Queue
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter
 import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import tools.jackson.databind.json.JsonMapper
 
 @Configuration
 class RabbitMQConfig {
@@ -33,8 +34,8 @@ class RabbitMQConfig {
     }
 
     @Bean
-    fun messageConverter(): MessageConverter {
-        return Jackson2JsonMessageConverter()
+    fun messageConverter(jsonMapper: JsonMapper): MessageConverter {
+        return JacksonJsonMessageConverter(jsonMapper)
     }
 
     @Bean

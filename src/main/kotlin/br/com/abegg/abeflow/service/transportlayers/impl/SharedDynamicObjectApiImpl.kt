@@ -3,13 +3,13 @@ package br.com.abegg.abeflow.service.transportlayers.impl
 import br.com.abegg.abeflow.lib.SecurityContext.getUserId
 import br.com.abegg.abeflow.service.entities.ShareModel
 import br.com.abegg.abeflow.service.entities.SharedDynamicObject
-import br.com.abegg.abeflow.service.iteractors.SharedDynamicObjectService
+import br.com.abegg.abeflow.service.iteractors.SharedDynamicObjectUseCase
 import br.com.abegg.abeflow.service.transportlayers.SharedDynamicObjectApi
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class SharedDynamicObjectApiImpl(
-    val service: SharedDynamicObjectService
+    val service: SharedDynamicObjectUseCase
 ) : SharedDynamicObjectApi {
 
     override fun share(
