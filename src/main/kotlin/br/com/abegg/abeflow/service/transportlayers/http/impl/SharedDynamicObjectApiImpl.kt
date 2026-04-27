@@ -1,10 +1,10 @@
-package br.com.abegg.abeflow.service.transportlayers.impl
+package br.com.abegg.abeflow.service.transportlayers.http.impl
 
 import br.com.abegg.abeflow.lib.SecurityContext.getUserId
 import br.com.abegg.abeflow.service.entities.ShareModel
 import br.com.abegg.abeflow.service.entities.SharedDynamicObject
 import br.com.abegg.abeflow.service.iteractors.SharedDynamicObjectUseCase
-import br.com.abegg.abeflow.service.transportlayers.SharedDynamicObjectApi
+import br.com.abegg.abeflow.service.transportlayers.http.SharedDynamicObjectApi
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -39,6 +39,14 @@ class SharedDynamicObjectApiImpl(
         version: Int
     ): Boolean {
         return service.unshare(id, version)
+    }
+
+    override fun revokeShare(
+        id: String,
+        version: Int,
+        targetUser: String
+    ): Boolean {
+        return service.revokeShare(id, version, targetUser)
     }
 
     override fun getShares(

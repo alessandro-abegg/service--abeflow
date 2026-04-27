@@ -1,8 +1,8 @@
-package br.com.abegg.abeflow.service.transportlayers.impl
+package br.com.abegg.abeflow.service.transportlayers.http.impl
 
 import br.com.abegg.abeflow.service.entities.DynamicObject
 import br.com.abegg.abeflow.service.iteractors.DynamicObjectUseCase
-import br.com.abegg.abeflow.service.transportlayers.DynamicObjectApi
+import br.com.abegg.abeflow.service.transportlayers.http.DynamicObjectApi
 import org.springframework.web.bind.annotation.RestController
 
 @RestController

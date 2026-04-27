@@ -1,4 +1,4 @@
-package br.com.abegg.abeflow.service.transportlayers
+package br.com.abegg.abeflow.service.transportlayers.http
 
 import br.com.abegg.abeflow.service.entities.SharedDynamicObject
 import io.swagger.v3.oas.annotations.Operation
@@ -26,6 +26,17 @@ interface SharedDynamicObjectApi {
     fun unshare(
         @PathVariable id: String,
         @PathVariable version: Int
+    ): Boolean
+
+    @GetMapping("/{id}/version/{version}/revoke/{targetUser}")
+    @Operation(
+        summary = "Get sharing info for a dynamic object",
+        description = "Returns the sharing information for a dynamic object. Only the owner or shared users can access this."
+    )
+    fun revokeShare(
+        @PathVariable id: String,
+        @PathVariable version: Int,
+        @PathVariable targetUser: String
     ): Boolean
 
     @GetMapping("/{id}/version/{version}")

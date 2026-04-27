@@ -1,4 +1,4 @@
-package br.com.abegg.abeflow.service.transportlayers
+package br.com.abegg.abeflow.service.transportlayers.http
 
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.web.bind.annotation.PathVariable
