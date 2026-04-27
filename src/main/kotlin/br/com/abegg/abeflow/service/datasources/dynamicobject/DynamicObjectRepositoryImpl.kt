@@ -71,7 +71,7 @@ class DynamicObjectRepositoryImpl(
 
     override fun get(
         id: String,
-        version: Integer,
+        version: Int,
         authenticatedUser: String
     ): DynamicObject? {
         val model = this.dynamicObjectRepositoryMongo.findByIdOrNull(DynamicObjectKey(id, version))

@@ -2,7 +2,7 @@ package br.com.abegg.abeflow.service.entities
 
 data class DynamicObject(
     val id: String,
-    val version: Integer,
+    val version: Int,
     val name: String,
     val description: String,
     val type: DynamicObjectType,

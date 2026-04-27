@@ -26,5 +26,5 @@ data class DynamicObjectModel(
 
 data class DynamicObjectKey(
     val id: String,
-    val version: Integer
+    val version: Int
 )

@@ -3,6 +3,7 @@ package br.com.abegg.abeflow.service.transportlayers
 import br.com.abegg.abeflow.service.entities.DynamicObject
 import io.swagger.v3.oas.annotations.Operation
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 
@@ -13,14 +14,14 @@ interface DynamicObjectApi {
         summary = "Query all dynamic objects",
         description = "Returns a list of dynamic objects accessible by the authenticated user. Access is granted for objects created by the user or marked as published."
     )
-    fun query(authenticatedUser: String): List<DynamicObject>
+    fun query(): List<DynamicObject>
 
     @GetMapping("/{id}/version/{version}")
     @Operation(
         summary = "Get a dynamic object by ID and version",
         description = "Returns a specific dynamic object if accessible by the authenticated user. Access is granted if the object was created by the user or is marked as published."
     )
-    fun get(id: String, version: Integer, authenticatedUser: String): DynamicObject?
+    fun get(@PathVariable id: String, @PathVariable version: Int): DynamicObject?
 
     @PostMapping
     @Operation(

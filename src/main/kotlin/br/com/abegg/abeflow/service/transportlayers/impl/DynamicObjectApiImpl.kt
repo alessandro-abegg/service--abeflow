@@ -10,10 +10,9 @@ class DynamicObjectApiImpl(
     val service: DynamicObjectService
 ) : DynamicObjectApi {
 
-    override fun query(authenticatedUser: String) = service.query(authenticatedUser)
+    override fun query() = service.query()
 
-    override fun get(id: String, version: Integer, authenticatedUser: String) = 
-        service.get(id, version, authenticatedUser)
+    override fun get(id: String, version: Int) = service.get(id, version)
 
     override fun save(data: DynamicObject) = service.save(data)
 }

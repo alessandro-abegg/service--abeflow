@@ -14,9 +14,8 @@ interface SharedDynamicObjectApi {
     )
     fun share(
         @PathVariable id: String,
-        @PathVariable version: Integer,
-        @RequestBody sharedWith: List<String>,
-        authenticatedUser: String
+        @PathVariable version: Int,
+        @RequestBody sharedWith: List<String>
     ): SharedDynamicObject
 
     @DeleteMapping("/{id}/version/{version}")
@@ -26,8 +25,7 @@ interface SharedDynamicObjectApi {
     )
     fun unshare(
         @PathVariable id: String,
-        @PathVariable version: Integer,
-        authenticatedUser: String
+        @PathVariable version: Int
     ): Boolean
 
     @GetMapping("/{id}/version/{version}")
@@ -37,7 +35,6 @@ interface SharedDynamicObjectApi {
     )
     fun getShares(
         @PathVariable id: String,
-        @PathVariable version: Integer,
-        authenticatedUser: String
+        @PathVariable version: Int
     ): SharedDynamicObject?
 }

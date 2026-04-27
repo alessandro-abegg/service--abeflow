@@ -1,5 +1,6 @@
 package br.com.abegg.abeflow.service.iteractors
 
+import br.com.abegg.abeflow.lib.SecurityContext.getUserId
 import br.com.abegg.abeflow.service.entities.DynamicObject
 import br.com.abegg.abeflow.service.iteractors.components.DynamicObjectValidatorComponent
 import br.com.abegg.abeflow.service.repositories.DynamicObjectRepository
@@ -11,9 +12,10 @@ class DynamicObjectService(
     private val validator: DynamicObjectValidatorComponent
 ) {
 
-    fun query(authenticatedUser: String) = repository.query(authenticatedUser)
+    fun query() = repository.query(getUserId())
 
-    fun get(id: String, version: Integer, authenticatedUser: String) = repository.get(id, version, authenticatedUser)
+    fun get(id: String, version: Int) =
+        repository.get(id, version, getUserId())
 
     fun save(data: DynamicObject): DynamicObject {
         validator.validate(data)

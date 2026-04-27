@@ -1,12 +1,17 @@
 package br.com.abegg.abeflow.service.iteractors
 
+import br.com.abegg.abeflow.executor.domain.model.ExecutionRequest
+import br.com.abegg.abeflow.lib.SecurityContext.getUserId
+import br.com.abegg.abeflow.service.config.RabbitMQConfig
 import br.com.abegg.abeflow.service.entities.SharedDynamicObject
 import br.com.abegg.abeflow.service.repositories.SharedDynamicObjectRepository
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 
 @Service
 class SharedDynamicObjectService(
-    private val repository: SharedDynamicObjectRepository
+    private val repository: SharedDynamicObjectRepository,
+    private val rabbitTemplate: RabbitTemplate
 ) {
 
     fun share(data: SharedDynamicObject): SharedDynamicObject {
@@ -14,9 +19,8 @@ class SharedDynamicObjectService(
         require(data.sharedBy.isNotBlank()) { "SharedBy (originator) cannot be blank" }
 
         val existing = repository.findByDynamicObject(data.dynamicObjectId, data.dynamicObjectVersion)
-        
+
         val dataToSave = if (existing != null) {
-            // 1. Check permissions
             val userShareInfo = existing.sharedWith.find { it.sharedWith == data.sharedBy }
             val isOwner = existing.sharedBy == data.sharedBy
             val canReshare = isOwner || (userShareInfo?.canReshare == true)
@@ -25,25 +29,24 @@ class SharedDynamicObjectService(
                 throw IllegalAccessException("User does not have permission to share this object")
             }
 
-            // 2. Prepare new shares with correct originator (data.sharedBy)
-            // and merge with existing list (avoiding duplicates for same target user)
             val existingSharedWithMap = existing.sharedWith.associateBy { it.sharedWith }.toMutableMap()
-            
+
             data.sharedWith.forEach { newShare ->
                 existingSharedWithMap[newShare.sharedWith] = newShare.copy(sharedBy = data.sharedBy)
             }
 
             existing.copy(sharedWith = existingSharedWithMap.values.toList())
         } else {
-            // First time sharing: data.sharedBy is the owner
             data
         }
 
         return repository.save(dataToSave)
     }
 
-    fun unshare(dynamicObjectId: String, version: Int, authenticatedUser: String): Boolean {
+    fun unshare(dynamicObjectId: String, version: Int): Boolean {
         val existing = repository.findByDynamicObject(dynamicObjectId, version) ?: return false
+
+        val authenticatedUser = getUserId()
 
         return if (existing.sharedBy == authenticatedUser) {
             repository.delete(dynamicObjectId, version)
@@ -60,10 +63,11 @@ class SharedDynamicObjectService(
         }
     }
 
-    fun revokeShare(dynamicObjectId: String, version: Int, targetUser: String, authenticatedUser: String): Boolean {
+    fun revokeShare(dynamicObjectId: String, version: Int, targetUser: String): Boolean {
         val existing = repository.findByDynamicObject(dynamicObjectId, version) ?: return false
 
-        // Check if the authenticated user has permission to revoke shares
+        val authenticatedUser = getUserId()
+
         val isOwner = existing.sharedBy == authenticatedUser
         val userShareInfo = existing.sharedWith.find { it.sharedWith == authenticatedUser }
         val canRevoke = isOwner || (userShareInfo?.canReshare == true)
@@ -73,8 +77,6 @@ class SharedDynamicObjectService(
         }
 
         val updatedSharedWith = existing.sharedWith.filter { it.sharedWith != targetUser }
-        
-        // If nothing changed (targetUser wasn't in the list), just return false
         if (updatedSharedWith.size == existing.sharedWith.size) return false
 
         val updated = existing.copy(sharedWith = updatedSharedWith)
@@ -82,10 +84,22 @@ class SharedDynamicObjectService(
         return true
     }
 
-    fun getShares(dynamicObjectId: String, version: Int, authenticatedUser: String): SharedDynamicObject? {
+    fun getShares(dynamicObjectId: String, version: Int): SharedDynamicObject? {
         val shares = repository.findByDynamicObject(dynamicObjectId, version)
+        val authenticatedUser = getUserId()
+
         return shares?.takeIf { s ->
             s.sharedBy == authenticatedUser || s.sharedWith.any { it.sharedWith == authenticatedUser }
         }
+    }
+
+    fun execute(dynamicObjectId: String, version: Int, formData: Map<String, Any>) {
+        val request = ExecutionRequest(
+            dynamicObjectId = dynamicObjectId,
+            version = version,
+            formData = formData,
+            authenticatedUser = getUserId()
+        )
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXECUTION_QUEUE, request)
     }
 }

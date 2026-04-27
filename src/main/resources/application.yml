@@ -3,8 +3,10 @@ spring:
     name: abeflow-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/abeflow
-      auto-index-creation: true
+      host: localhost
+      port: 27017
+      database: abeflow
+      authentication-database: admin
     redis:
       host: localhost
       port: 6379
